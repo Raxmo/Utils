@@ -4,30 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Drawing;
+using System.Media;
 using System.Collections;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace Utils
 {
-	/* mathie utils framework and notes
-	 * 
-	 * scalars :			x
-	 *	imagionary unit :	i
-	 *	
-	 * vectors :			{x, y}
-	 *	complex numbers :	{r, i}
-	 *	polars :			{r, Θ}
-	 *	3polars :			{r, h, a}
-	 *	quaterneons :		{r, i, j, k}
-	 *	
-	 * matricies:			{{00, 01},
-	 *						 {10, 11}}
-	 *			  
-	 * 
-	 * Tensors :
-	 *		All tensors are arrays of tensors
-	 * 
-	 */
+	// useful functions and constants and such.
 
 	public static class Consts
 	{
@@ -107,15 +91,236 @@ namespace Utils
 		{
 			Vec s = new Vec();
 			double sum = 0;
-			foreach(double d in x)
+			for (int i = 0; i < x.Dims; i++)
 			{
-				sum += Math.Exp(d);
+				sum += Math.Exp(x[i]);
 			}
-			foreach(double d in x)
+			for (int i = 0; i < x.Dims; i++)
 			{
-				s.Add(Math.Exp(d) / sum);
+				s.Add(Math.Exp(x[i] / sum));
 			}
 			return s;
+		}
+
+		public static Vec StiffMax(Vec x)
+		{
+			Vec s = new Vec();
+			double sum = 0;
+			for (int i = 0; i < x.Dims; i++)
+			{
+				sum += x[i];
+			}
+			for (int i = 0; i < x.Dims; i++)
+			{
+				s.Add(x[i] / sum);
+			}
+			return s;
+		}
+
+		public static int Choose(Vec x)
+		{
+			double c = rand.NextDouble();
+			for (int i = 0; i < x.Dims; i++)
+			{
+				if (c < x[i])
+				{
+					return i;
+				}
+				c -= x[i];
+			}
+			return x.Dims;
+		}
+
+		public static int HotPick(Vec x)
+		{
+			double c = rand.NextDouble();
+			int d = 0;
+			while(c - x[d] > 0)
+			{
+				d++;
+			}
+			return d;
+		}
+
+		public static Vec Center(Vec a, Vec b, Vec c)
+		{
+			Matrix m = new Matrix();
+			m.Add(new Vec() {   1,     1,    1,  1 });
+			m.Add(new Vec() { a * a, a[0], a[1], 1 });
+			m.Add(new Vec() { b * b, b[0], b[1], 1 });
+			m.Add(new Vec() { c * c, c[0], c[1], 1 });
+			Vec d = new Vec();
+			d.Add((m.MinorMatrix(0, 1).Det / m.MinorMatrix(0, 0).Det) / 2);
+			d.Add((m.MinorMatrix(0, 2).Det / m.MinorMatrix(0, 0).Det) / -2);
+			return d;
+		}
+
+		public static Vec Center(Vec[] a)
+		{
+			return Center(a[0], a[1], a[2]);
+		}
+
+		public static bool IsInCirc(Vec[] a)
+		{
+			Matrix m = new Matrix();
+			for (int i = 0; i < 4; i++)
+			{
+				m.Add(new Vec() { a[i][0], a[i][1], a[i] * a[i], 1 });
+			}
+			return m.Det < 0;
+		}
+
+		public static bool IsInPoly(System.Drawing.PointF[] polygon, System.Drawing.PointF testPoint)
+		{
+			bool result = false;
+			int j = polygon.Count() - 1;
+			for (int i = 0; i < polygon.Count(); i++)
+			{
+				if (polygon[i].Y < testPoint.Y && polygon[j].Y >= testPoint.Y || polygon[j].Y < testPoint.Y && polygon[i].Y >= testPoint.Y)
+				{
+					if (polygon[i].X + (testPoint.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) * (polygon[j].X - polygon[i].X) < testPoint.X)
+					{
+						result = !result;
+					}
+				}
+				j = i;
+			}
+			return result;
+		}
+
+		public static bool IsInPoly(Point[] polygon, Point testPoint)
+		{
+			bool result = false;
+			int j = polygon.Count() - 1;
+			for (int i = 0; i < polygon.Count(); i++)
+			{
+				if (polygon[i].Y < testPoint.Y && polygon[j].Y >= testPoint.Y || polygon[j].Y < testPoint.Y && polygon[i].Y >= testPoint.Y)
+				{
+					if (polygon[i].X + (testPoint.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) * (polygon[j].X - polygon[i].X) < testPoint.X)
+					{
+						result = !result;
+					}
+				}
+				j = i;
+			}
+			return result;
+		}
+		
+		public static bool IsInPoly(Polygon p, Point testPoint)
+		{
+			bool result = false;
+
+			var polygon = p.Points;
+
+			int j = polygon.Count() - 1;
+			for (int i = 0; i < polygon.Count(); i++)
+			{
+				if (polygon[i].Y < testPoint.Y && polygon[j].Y >= testPoint.Y || polygon[j].Y < testPoint.Y && polygon[i].Y >= testPoint.Y)
+				{
+					if (polygon[i].X + (testPoint.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) * (polygon[j].X - polygon[i].X) < testPoint.X)
+					{
+						result = !result;
+					}
+				}
+				j = i;
+			}
+			return result;
+		}
+
+		public static bool IsInPoly(Polygon p, Vec testVector)
+		{
+			bool result = false;
+
+			Point testPoint = new Point(testVector[0], testVector[1]);
+
+			var polygon = p.Points;
+
+			int j = polygon.Count() - 1;
+			for (int i = 0; i < polygon.Count(); i++)
+			{
+				if (polygon[i].Y < testPoint.Y && polygon[j].Y >= testPoint.Y || polygon[j].Y < testPoint.Y && polygon[i].Y >= testPoint.Y)
+				{
+					if (polygon[i].X + (testPoint.Y - polygon[i].Y) / (polygon[j].Y - polygon[i].Y) * (polygon[j].X - polygon[i].X) < testPoint.X)
+					{
+						result = !result;
+					}
+				}
+				j = i;
+			}
+			return result;
+		}
+	}
+
+	// DataMatrix stuffs
+
+	public class DataMatrix : IEnumerable
+	{
+		private List<dynamic> Data = new List<dynamic>();
+		private List<double> Probabilies = new List<double>();
+
+
+
+		public IEnumerator GetEnumerator()
+		{
+			yield return Data;
+		}
+
+		public void Add(params dynamic[] a)
+		{
+			Data.Add(a[0]);
+			Probabilies.Add(a[1]);
+		}
+
+		
+
+		public void Normalize()
+		{
+			double sum = 0;
+			foreach(double d in Probabilies)
+			{
+				sum += d;
+			}
+			for (int p = 0; p < Probabilies.Count(); p++)
+			{
+				Probabilies[p] = Probabilies[p] / sum;
+			}
+		}
+
+		public void InverseNormalize()
+		{
+			double sum = 0;
+			foreach(double d in Probabilies)
+			{
+				sum += d;
+			}
+			for (int p = 0; p < Probabilies.Count(); p++)
+			{
+				Probabilies[p] = (sum - Probabilies[p]) / sum;
+			}
+		}
+
+		public void SoftMax()
+		{
+			for (int p = 0; p < Probabilies.Count(); p++)
+			{
+				Probabilies[p] = Math.Exp(Probabilies[p]);
+			}
+			Normalize();
+		}
+
+		public dynamic Pick()
+		{
+			double c = Consts.rand.NextDouble();
+			int p = 0;
+			while((c -= Probabilies[p]) > 0)
+			{
+				p++;
+				if(p >= Probabilies.Count)
+				{
+					return null;
+				}
+			}
+			return Data[p];
 		}
 	}
 
@@ -257,34 +462,139 @@ namespace Utils
 	{
 		// vector variables
 
-		private List<double> v = new List<double>();
+		private List<double> _v = new List<double>();
 
+		// Vector element retrieval
+
+		public double x
+		{
+			get
+			{
+				try
+				{
+					return _v[0];
+				}
+				catch
+				{
+					return double.NaN;
+				}
+			}
+			set
+			{
+				_v[0] = value;
+			}
+		}
+
+		public double y
+		{
+			get
+			{
+				try
+				{
+					return _v[1];
+				}
+				catch
+				{
+					return double.NaN;
+				}
+			}
+			set
+			{
+				_v[1] = value;
+			}
+		}
+
+		public double z
+		{
+			get
+			{
+				try { return _v[2]; }
+				catch { return double.NaN; }
+			}
+			set
+			{
+				_v[2] = value;
+			}
+		}
+
+		public double w
+		{
+			get
+			{
+				try { return _v[3]; }
+				catch { return double.NaN; }
+			}
+			set
+			{
+				_v[3] = value;
+			}
+		}
+
+		public double v
+		{
+			get
+			{
+				try { return _v[4]; }
+				catch { return double.NaN; }
+			}
+			set
+			{
+				_v[4] = value;
+			}
+		}
+
+		public double u
+		{
+			get
+			{
+				try { return _v[5]; }
+				catch { return double.NaN; }
+			}
+			set
+			{
+				_v[5] = value;
+			}
+		}
+
+		public double t
+		{
+			get
+			{
+				try { return _v[6]; }
+				catch { return double.NaN; }
+			}
+			set
+			{
+				_v[6] = value;
+			}
+		}
+		
 		// Vector enumeration and indexing
 
 		public IEnumerator GetEnumerator()
 		{
-			yield return v;
+			yield return _v;
 		}
 
 		public void Add(params double[] a)
 		{
-			v.Add(a[0]);
+			_v.Add(a[0]);
 		}
 
 		public void Add(double d)
 		{
-			v.Add(d);
+			_v.Add(d);
 		}
 
 		public double this[int dim]
 		{
 			get
 			{
-				return v[dim];
+				return _v[dim];
 			}
 			set
 			{
-				v[dim] = value;
+				_v[dim] = value;
 			}
 		}
 
@@ -294,7 +604,7 @@ namespace Utils
 		{
 			for (int dim = 0; dim < dims; dim++)
 			{
-				v.Add(0);
+				_v.Add(0);
 			}
 		}
 
@@ -305,7 +615,7 @@ namespace Utils
 
 		public Vec(double[] a)
 		{
-			v = a.ToList();
+			_v = a.ToList();
 		}
 
 		public static explicit operator Vec(double[] a)
@@ -323,7 +633,7 @@ namespace Utils
 		public string Print()
 		{
 			string p = "[";
-			foreach (double d in v)
+			foreach (double d in _v)
 			{
 				p += " " + d;
 			}
@@ -335,16 +645,16 @@ namespace Utils
 		{
 			get
 			{
-				return v.Count();
+				return _v.Count();
 			}
 		}
 
 		public Vec Copy()
 		{
 			var c = new Vec();
-			foreach (double d in v)
+			foreach (double d in _v)
 			{
-				c.v.Add(d);
+				c._v.Add(d);
 			}
 			return c;
 		}
@@ -356,17 +666,17 @@ namespace Utils
 
 		public void RemoveDim(int dim)
 		{
-			v.RemoveAt(dim);
+			_v.RemoveAt(dim);
 		}
 
 		public void RemoveDims(int start, int num)
 		{
-			v.RemoveRange(start, num);
+			_v.RemoveRange(start, num);
 		}
 
 		public void Concat(Vec a)
 		{
-			v.AddRange(a.v);
+			_v.AddRange(a._v);
 		}
 
 		// Vector operations
@@ -376,7 +686,7 @@ namespace Utils
 			var c = new Vec();
 			for (int dim = 0; dim < a.Dims; dim++)
 			{
-				c.v.Add(a[dim] + b[dim]);
+				c._v.Add(a[dim] + b[dim]);
 			}
 			return c;
 		}
@@ -386,7 +696,7 @@ namespace Utils
 			var c = new Vec();
 			for (int dim = 0; dim < a.Dims; dim++)
 			{
-				c.v.Add(a[dim] - b[dim]);
+				c._v.Add(a[dim] - b[dim]);
 			}
 			return c;
 		}
@@ -396,7 +706,7 @@ namespace Utils
 			var c = new Vec();
 			for (int dim = 0; dim < a.Dims; dim++)
 			{
-				c.v.Add(a[dim] * b);
+				c._v.Add(a[dim] * b);
 			}
 			return c;
 		}
@@ -411,7 +721,7 @@ namespace Utils
 			var c = new Vec();
 			for (int dim = 0; dim < a.Dims; dim++)
 			{
-				c.v.Add(a[dim] / b);
+				c._v.Add(a[dim] / b);
 			}
 			return c;
 		}
@@ -430,19 +740,19 @@ namespace Utils
 
 		public static explicit operator Complex (Vec a)
 		{
-			return new Complex(a.v.ToArray());
+			return new Complex(a._v.ToArray());
 		}
 
 		public static explicit operator Quaterneon (Vec a)
 		{
-			return new Quaterneon(a.v.ToArray());
+			return new Quaterneon(a._v.ToArray());
 		}
 
 		public static explicit operator Polar(Vec a)
 		{
 			Polar p = new Polar();
 			p.r = a.Mag;
-			p.t = Math.Atan2(a[0], a[1]);
+			p.t = Math.Atan2(a[1], a[0]);
 			return p;
 		}
 
@@ -450,8 +760,8 @@ namespace Utils
 		{
 			Polar3 p = new Polar3();
 			p.r = a.Mag;
-			p.h = Math.Acos(a[2] / p.r);
-			p.a = Math.Atan2(a[1], a[0]);
+			p.h = Math.Atan(a[1] / a[0]);
+			p.a = Math.Acos(a[2] / a.Mag);
 			return p;
 		}
 	}
@@ -526,6 +836,16 @@ namespace Utils
 		public static Polar operator / (Polar a, double b)
 		{
 			return new Polar(a.r / b, a.t);
+		}
+
+		public static Polar operator * (Polar a, Polar b)
+		{
+			return new Polar(a.r * b.r, a.t * b.t);
+		}
+
+		public static Polar operator / (Polar a, Polar b)
+		{
+			return new Polar(a.r / b.r, a.t / b.t);
 		}
 
 		// polar conversions
@@ -1206,7 +1526,7 @@ namespace Utils
 			c.r = a.r * b.r - a.i * b.i - a.j * b.j - a.k * b.k;
 			c.i = a.r * b.i + a.i * b.r + a.j * b.k - a.k * b.j;
 			c.j = a.r * b.j - a.i * b.k + a.j * b.r + a.k * b.i;
-			c.k = a.r * b.k + a.i * b.j + a.j * b.i + a.k * b.r;
+			c.k = a.r * b.k + a.i * b.j - a.j * b.i + a.k * b.r;
 			return c;
 		}
 
@@ -1235,293 +1555,4 @@ namespace Utils
 		// Quaterneon functions
 	}
 	
-	//public static class Consts
-	//{
-	//	public static double Circ = Math.Pow(Math.E, 2 * Math.PI);
-	//}
-
-	//public static class Functions
-	//{
-	//	public static double Sigmoid(double x)
-	//	{
-	//		return 1 / (1 - Math.Exp(- x));
-	//	}
-	//}
-
-	//public struct Vec
-	//{
-	//	public double X;
-	//	public double Y;
-
-	//	public string Print()
-	//	{
-	//		return "X: " + X + ", Y:" + Y;
-	//	}
-
-	//	public Vec(double x, double y)
-	//	{
-	//		X = x;
-	//		Y = y;
-	//	}
-
-	//	public static Vec operator + (Vec a, Vec b)
-	//	{
-	//		return new Vec(a.X + b.X, a.Y + b.Y);
-	//	}
-
-	//	public static Vec operator - (Vec a, Vec b)
-	//	{
-	//		return new Vec(a.X - b.X, a.Y - b.Y);
-	//	}
-
-	//	public static Vec operator * (Vec a, double b)
-	//	{
-	//		return new Vec(a.X * b, a.Y * b);
-	//	}
-
-	//	public static Vec operator / (Vec a, double b)
-	//	{
-	//		return new Vec(a.X / b, a.Y / b);
-	//	}
-
-	//	public static Vec operator * (double a, Vec b)
-	//	{
-	//		return b * a;
-	//	}
-
-	//	public static Vec operator * (Vec a, Vec b) //complex multiplication
-	//	{
-	//		return new Vec(a.X * b.X - a.Y * b.Y, a.X * b.Y + a.Y * b.X);
-	//	}
-
-	//	public static Vec operator ^ (double a, Vec b)
-	//	{
-	//		return new Vec(Math.Cos(Math.Log(a) * b.Y), Math.Sin(Math.Log(a) * b.Y)) * Math.Pow(a, b.X);
-	//	}
-
-	//	public static double operator | (Vec a, Vec b)
-	//	{
-	//		return (a.X * b.X) + (a.Y * b.Y);
-	//	}
-
-	//	public static Vec operator ^ (Vec a, double b)
-	//	{
-	//		var pr = Math.Sqrt(a | a);
-	//		var pt = Math.Atan2(a.Y, a.X);
-	//		return (Math.Pow(pr, b) * (Math.E ^ (new Vec(0, b * pt))));
-	//	}
-
-	//	public static bool operator == (Vec a, Vec b)
-	//	{
-	//		return (a.X == b.X && a.Y == b.Y);
-	//	}
-
-	//	public static bool operator != (Vec a, Vec b)
-	//	{
-	//		return !(a == b);
-	//	}
-
-	//	public static explicit operator Vec(System.Drawing.Point p)
-	//	{
-	//		return new Vec(p.X, p.Y);
-	//	}
-
-	//	public static explicit operator Vec(System.Windows.Point p)
-	//	{
-	//		return new Vec(p.X, p.Y);
-	//	}
-
-	//	public static Vec operator %(Vec a, Vec b)
-	//	{
-	//		return (a + b) / 2;
-	//	}
-
-	//}
-
-	//public class Matrix : IEnumerable
-	//{
-	//	/* What we know abuot matricies
-	//	 * - matricies are defined by rows, cols
-	//	 * - addition is element-wise
-	//	 */
-
-	//	public IEnumerator GetEnumerator()
-	//	{
-	//		yield return m;
-	//	}
-
-	//	private int currentRow = 0;
-	//	public void Add(params double[] a)
-	//	{
-	//		for (int c = 0; c < a.Length; c++)
-	//		{
-	//			m[currentRow, c] = a[c];
-	//		}
-	//		currentRow++;
-	//	}
-
-	//	private double[,] m;
-
-	//	public double this[int rows, int cols]
-	//	{
-	//		get => m[rows, cols];
-	//		set => m[rows, cols] = value;
-	//	}		
-
-	//	public Matrix(int rows, int cols)
-	//	{
-	//		m = new double[rows, cols];
-	//	}
-
-	//	public Matrix(Matrix a)
-	//	{
-	//		m = a.m;
-	//	}
-
-	//	public int Rows()
-	//	{
-	//		return m.GetLength(0);
-	//	}
-
-	//	public int Cols()
-	//	{
-	//		return m.GetLength(1);
-	//	}
-
-	//	public static Matrix operator + (Matrix a, Matrix b)
-	//	{
-	//		var c = new Matrix(a.Rows(), a.Cols());
-
-	//		for (int rows = 0; rows < a.Rows(); rows++)
-	//		{
-	//			for (int cols = 0; cols < a.Cols(); cols++)
-	//			{
-	//				c[rows, cols] = a[rows, cols] + b[rows, cols];
-	//			}
-	//		}
-
-	//		return c;
-	//	}
-
-	//	public static Matrix operator - (Matrix a, Matrix b)
-	//	{
-	//		var c = new Matrix(a.Rows(), a.Cols());
-
-	//		for (int rows = 0; rows < a.Rows(); rows++)
-	//		{
-	//			for (int cols = 0; cols < a.Cols(); cols++)
-	//			{
-	//				c[rows, cols] = a[rows, cols] - b[rows, cols];
-	//			}
-	//		}
-
-	//		return c;
-	//	}
-
-	//	public static Matrix operator * (Matrix a, double b)
-	//	{
-	//		var c = a;
-
-	//		for (int rows = 0; rows < a.Rows(); rows++)
-	//		{
-	//			for (int cols = 0; cols < a.Cols(); cols++)
-	//			{
-	//				c[rows, cols] *= b;
-	//			}
-	//		}
-
-	//		return c;
-	//	}
-
-	//	public static Matrix operator * (double a, Matrix b)
-	//	{
-	//		return b * a;
-	//	}
-
-	//	public static Matrix operator * (Matrix a, Matrix b)
-	//	{
-	//		if(a.Cols() != b.Rows())
-	//		{
-	//			return null;
-	//		}
-	//		else
-	//		{
-	//			var c = new Matrix(a.Rows(), b.Cols());
-
-	//			for (int row = 0; row < c.Rows(); row++)
-	//			{
-	//				for (int col = 0; col < c.Cols(); col++)
-	//				{
-	//					double sum = 0;
-
-	//					for (int step = 0; step < a.Cols(); step++)
-	//					{
-	//						sum += a[row, step] * b[step, col];
-	//					}
-
-	//					c[row, col] = sum;
-	//				}
-	//			}
-	//			return c;
-	//		}
-	//	}
-
-	//	public Matrix SubM(int row, int col)
-	//	{
-	//		var c = new Matrix(Rows() - 1, Cols() - 1);
-
-	//		for (int rows = 0; rows < c.Rows(); rows++)
-	//		{
-	//			for (int cols = 0; cols < c.Cols(); cols++)
-	//			{
-	//				var nrow = (rows >= row) ? rows + 1 : rows;
-	//				var ncol = (cols >= col) ? cols + 1 : cols;
-
-	//				c[rows, cols] = m[nrow, ncol];
-	//			}
-	//		}
-
-	//		return c;
-	//	}
-
-	//	public Matrix Transpose()
-	//	{
-	//		var o = new Matrix(Cols(), Rows());
-
-	//		for(int row = 0; row < o.Rows(); row++)
-	//		{
-	//			for (int col = 0; col < o.Cols(); col++)
-	//			{
-	//				o[row, col] = this[col, row];
-	//			}
-	//		}
-
-	//		return o;
-	//	}
-
-	//	public double Det()
-	//	{
-	//		if (Rows() == Cols()) {
-	//			if (Rows() == 2 && Cols() == 2)
-	//			{
-	//				return m[0, 0] * m[1, 1] - m[1, 0] * m[0, 1];
-	//			}
-	//			else
-	//			{
-	//				double sum = 0;
-	//				for (int col = 0; col < Cols(); col++)
-	//				{
-	//					sum += m[0, col] * SubM(0, col).Det();
-	//				}
-
-	//				return sum;
-	//			}
-	//		}
-	//		else
-	//		{
-	//			return double.NaN;
-	//		}
-	//	}		
-	//}
-
 }
