@@ -252,7 +252,7 @@ namespace Utils
 	}
 
 	// DataMatrix stuffs
-
+	[Serializable]
 	public class DataMatrix : IEnumerable
 	{
 		private List<dynamic> Data = new List<dynamic>();
@@ -325,7 +325,7 @@ namespace Utils
 	}
 
 	// Tensor stuffs
-
+	[Serializable]
 	public class Tensor : IEnumerable
 	{
 		// Tensor variable
@@ -457,7 +457,7 @@ namespace Utils
 	}
 
 	// Vector stuffs
-
+	[Serializable]
 	public class Vec : IEnumerable
 	{
 		// vector variables
@@ -767,7 +767,7 @@ namespace Utils
 	}
 
 	// Polar stuffs
-
+	[Serializable]
 	public class Polar
 	{
 		// polar variables
@@ -860,7 +860,7 @@ namespace Utils
 	}
 
 	// polar 3 stuffs
-
+	[Serializable]
 	public class Polar3
 	{
 		// polar 3 variables
@@ -943,7 +943,7 @@ namespace Utils
 	}
 
 	// Matrix stuffs
-
+	[Serializable]
 	public class Matrix : IEnumerable
 	{
 		// Matrix Variables
@@ -1274,7 +1274,7 @@ namespace Utils
 	}
 
 	// Complex number stuffs
-
+	[Serializable]
 	public class Complex
 	{
 		// Complex number variables
@@ -1390,7 +1390,7 @@ namespace Utils
 	}
 
 	// Quaterneon stuffs
-
+	[Serializable]
 	public class Quaterneon
 	{
 		// Quaterneon variables
